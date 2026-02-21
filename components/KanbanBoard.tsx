@@ -11,7 +11,7 @@ type KanbanBoardProps = {
 };
 
 const LeadCard = ({ lead }: { lead: Lead }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: {
       leadStage: lead.stage,
@@ -23,7 +23,7 @@ const LeadCard = ({ lead }: { lead: Lead }) => {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined, transition }}
+      style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined }}
       className={clsx(
         "bg-white/90 dark:bg-[#111827] rounded-2xl border border-white/20 dark:border-white/5 p-4 shadow-lg shadow-slate-900/10",
         "ring-1 ring-slate-900/5 dark:ring-0",
