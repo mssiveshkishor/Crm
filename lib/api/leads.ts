@@ -51,7 +51,7 @@ export async function fetchLeads(): Promise<Lead[]> {
           initials: ownerRow?.full_name
             ? ownerRow.full_name
                 .split(" ")
-                .map((part) => part[0])
+                .map((part: string) => part[0])
                 .join("")
                 .toUpperCase()
             : "UA",
