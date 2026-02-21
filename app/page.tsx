@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LeadList } from "@/components/LeadList";
@@ -11,22 +11,38 @@ import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import { ChevronDown } from "lucide-react";
 
 export default function HomePage() {
-  const [leads, setLeads] = useState<Lead[]>(sampleLeads);
-  const { isFetching } = useQuery({
+  const [stageOverrides, setStageOverrides] = useState<Record<string, Lead["stage"]>>({});
+  const { data, isFetching } = useQuery({
     queryKey: ["leads"],
     queryFn: fetchLeads,
     refetchOnWindowFocus: false,
-    onSuccess: (serverLeads) => {
-      setLeads(serverLeads);
-    },
   });
+
+  const baseLeads = data ?? sampleLeads;
+  const leads = useMemo(
+    () =>
+      baseLeads.map((lead) => {
+        const override = stageOverrides[lead.id];
+        if (override && override !== lead.stage) {
+          return { ...lead, stage: override };
+        }
+        return lead;
+      }),
+    [baseLeads, stageOverrides]
+  );
 
   const isMobile = useMediaQuery("(max-width: 900px)");
 
   const handleStageChange = (leadId: string, stage: Lead["stage"]) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === leadId ? { ...lead, stage } : lead))
-    );
+    setStageOverrides((prev) => {
+      const baseLead = baseLeads.find((lead) => lead.id === leadId);
+      if (baseLead && baseLead.stage === stage) {
+        const next = { ...prev };
+        delete next[leadId];
+        return next;
+      }
+      return { ...prev, [leadId]: stage };
+    });
   };
 
   return (
