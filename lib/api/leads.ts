@@ -30,30 +30,34 @@ export async function fetchLeads(): Promise<Lead[]> {
   }
 
   return (
-    data?.map((row) => ({
-      id: row.id,
-      name: row.name ?? row.company,
-      company: row.company ?? "Unknown",
-      value: Number(row.value ?? 0),
-      stage: (row.stage ?? "New") as Lead["stage"],
-      priority: (row.priority ?? "Medium") as Lead["priority"],
-      lastContacted: row.last_contacted ?? "Not yet",
-      nextAction: row.next_action ?? "Follow up",
-      notes: row.notes ?? "",
-      channel: row.channel ?? "Email",
-      owner: {
-        id: row.owner?.id ?? "owner_fallback",
-        name: row.owner?.full_name ?? "Unassigned",
-        email: row.owner?.email ?? "",
-        initials: row.owner?.full_name
-          ? row.owner.full_name
-              .split(" ")
-              .map((part) => part[0])
-              .join("")
-              .toUpperCase()
-          : "UA",
-        color: "#9ca3af",
-      },
-    })) ?? sampleLeads
+    data?.map((row) => {
+      const ownerRow = Array.isArray(row.owner) ? row.owner[0] : row.owner;
+
+      return {
+        id: row.id,
+        name: row.name ?? row.company,
+        company: row.company ?? "Unknown",
+        value: Number(row.value ?? 0),
+        stage: (row.stage ?? "New") as Lead["stage"],
+        priority: (row.priority ?? "Medium") as Lead["priority"],
+        lastContacted: row.last_contacted ?? "Not yet",
+        nextAction: row.next_action ?? "Follow up",
+        notes: row.notes ?? "",
+        channel: row.channel ?? "Email",
+        owner: {
+          id: ownerRow?.id ?? "owner_fallback",
+          name: ownerRow?.full_name ?? "Unassigned",
+          email: ownerRow?.email ?? "",
+          initials: ownerRow?.full_name
+            ? ownerRow.full_name
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .toUpperCase()
+            : "UA",
+          color: "#9ca3af",
+        },
+      };
+    }) ?? sampleLeads
   );
 }
