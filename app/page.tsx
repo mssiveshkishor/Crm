@@ -12,7 +12,9 @@ import { ChevronDown } from "lucide-react";
 
 export default function HomePage() {
   const [leads, setLeads] = useState<Lead[]>(sampleLeads);
-  const { isFetching } = useQuery(["leads"], fetchLeads, {
+  const { isFetching } = useQuery({
+    queryKey: ["leads"],
+    queryFn: fetchLeads,
     refetchOnWindowFocus: false,
     onSuccess: (serverLeads) => {
       setLeads(serverLeads);
