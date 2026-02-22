@@ -6,19 +6,30 @@ import type { Session } from "@supabase/supabase-js";
 
 export function useSupabaseAuth() {
   const client = useMemo(() => getSupabaseClient(), []);
-  const [session, setSession] = useState<Session | null>(() => {
-    return client?.auth.session() ?? null;
-  });
-  const [loading, setLoading] = useState<boolean>(!session);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState<boolean>(() => (client ? true : false));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!client) return;
+
+    let mounted = true;
+
+    client.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setSession(data.session);
+      setLoading(false);
+    });
+
     const { data: listener } = client.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
       setLoading(false);
     });
-    return () => listener.subscription.unsubscribe();
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, [client]);
 
   const signInWithPassword = async (email: string, password: string) => {
