@@ -21,9 +21,18 @@ export function Sidebar({ activeView, onChangeView, session, onSignOut, canViewS
 
   return (
     <aside className="hidden w-56 flex-col gap-6 border-r border-white/5 bg-slate-950 p-6 text-sm text-slate-300 lg:flex">
-      <div className="space-y-1">
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
-        <p className="text-lg font-semibold text-white">{session.user.email}</p>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <img
+            src="/logo.jpeg"
+            alt="Yadhurtech logo"
+            className="h-10 w-10 rounded-2xl object-cover"
+          />
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
+            <p className="text-lg font-semibold text-white">{session.user.email}</p>
+          </div>
+        </div>
         <p className="text-[13px] text-slate-500">Superadmin</p>
       </div>
       <nav className="flex flex-col gap-2">

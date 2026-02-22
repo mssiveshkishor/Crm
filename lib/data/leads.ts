@@ -1,3 +1,5 @@
+import type { UserRole } from "./users";
+
 export type LeadStage =
   | "New"
   | "Contacted"
@@ -21,6 +23,8 @@ export type LeadOwner = {
   email: string;
   initials: string;
   color: string;
+  role?: UserRole;
+  team?: string;
 };
 
 export type Lead = {
@@ -35,6 +39,7 @@ export type Lead = {
   nextAction: string;
   notes: string;
   channel: string;
+  quoteUrl?: string;
 };
 
 export const sampleOwners: LeadOwner[] = [
@@ -44,6 +49,8 @@ export const sampleOwners: LeadOwner[] = [
     email: "priya@yadhurtech.com",
     initials: "PD",
     color: "#f97316",
+    role: "superadmin",
+    team: "Leadership",
   },
   {
     id: "owner_2",
@@ -51,6 +58,8 @@ export const sampleOwners: LeadOwner[] = [
     email: "marcus@yadhurtech.com",
     initials: "MR",
     color: "#3b82f6",
+    role: "manager",
+    team: "Enterprise",
   },
   {
     id: "owner_3",
@@ -58,6 +67,8 @@ export const sampleOwners: LeadOwner[] = [
     email: "lena@yadhurtech.com",
     initials: "LO",
     color: "#14b8a6",
+    role: "sales",
+    team: "Growth",
   },
 ];
 
@@ -74,6 +85,7 @@ export const sampleLeads: Lead[] = [
     nextAction: "Schedule discovery",
     notes: "AI-assisted diagnostics for rural clinics",
     channel: "Email",
+    quoteUrl: undefined,
   },
   {
     id: "lead_2",

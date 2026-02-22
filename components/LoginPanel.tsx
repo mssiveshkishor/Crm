@@ -20,7 +20,14 @@ export function LoginPanel({ onSubmit, loading, error }: LoginPanelProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-2xl shadow-slate-900/50">
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
+        <div className="flex items-center gap-3">
+          <img
+            src="/logo.jpeg"
+            alt="Yadhurtech logo"
+            className="h-10 w-10 rounded-2xl object-cover"
+          />
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
+        </div>
         <h1 className="mt-3 text-3xl font-semibold">Welcome back</h1>
         <p className="text-sm text-slate-400">Sign in with your super admin credentials to continue.</p>
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>

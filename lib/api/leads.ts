@@ -1,5 +1,20 @@
 import { getSupabaseClient } from "../supabaseClient";
 import { Lead, sampleLeads } from "../data/leads";
+import type { SystemUser } from "../data/users";
+
+const roleColorMap: Record<SystemUser["role"], string> = {
+  superadmin: "#f97316",
+  admin: "#14b8a6",
+  manager: "#22d3ee",
+  sales: "#3b82f6",
+};
+
+const getRoleColor = (role?: SystemUser["role"]) => {
+  if (role && roleColorMap[role]) {
+    return roleColorMap[role];
+  }
+  return "#9ca3af";
+};
 
 export async function fetchLeads(): Promise<Lead[]> {
   const supabase = getSupabaseClient();
@@ -20,7 +35,8 @@ export async function fetchLeads(): Promise<Lead[]> {
       next_action,
       notes,
       channel,
-      owner:profiles(id, full_name, email)
+      quote_url,
+      owner:profiles(id, full_name, email, role, team)
     `)
     .order("created_at", { ascending: false });
 
@@ -44,6 +60,7 @@ export async function fetchLeads(): Promise<Lead[]> {
         nextAction: row.next_action ?? "Follow up",
         notes: row.notes ?? "",
         channel: row.channel ?? "Email",
+        quoteUrl: row.quote_url ?? undefined,
         owner: {
           id: ownerRow?.id ?? "owner_fallback",
           name: ownerRow?.full_name ?? "Unassigned",
@@ -55,7 +72,9 @@ export async function fetchLeads(): Promise<Lead[]> {
                 .join("")
                 .toUpperCase()
             : "UA",
-          color: "#9ca3af",
+          color: getRoleColor(ownerRow?.role as SystemUser["role"] | undefined),
+          role: ownerRow?.role,
+          team: ownerRow?.team,
         },
       };
     }) ?? sampleLeads

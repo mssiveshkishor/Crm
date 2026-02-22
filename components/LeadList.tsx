@@ -1,7 +1,9 @@
 "use client";
 
 import { Lead } from "@/lib/data/leads";
-import { MoreHorizontal, ArrowRight } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import clsx from "clsx";
+import { formatINR } from "@/lib/utils/formatCurrency";
 
 type LeadListProps = {
   leads: Lead[];
@@ -31,11 +33,16 @@ export function LeadList({ leads, stageLabels, onCardClick }: LeadListProps) {
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                ${lead.value.toLocaleString()}
-              </span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">{formatINR(lead.value)}</span>
               <div className="flex items-center gap-3 text-slate-500">
-                <ArrowRight size={16} />
+                <a
+                  href={lead.quoteUrl ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={clsx("text-xs text-cyan-400 underline", !lead.quoteUrl && "pointer-events-none opacity-40")}
+                >
+                  {lead.quoteUrl ? "Quotation" : "Add quote"}
+                </a>
                 <MoreHorizontal size={16} />
               </div>
             </div>

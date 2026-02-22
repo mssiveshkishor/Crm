@@ -13,6 +13,7 @@ export type LeadFormValues = {
   nextAction: string;
   notes: string;
   channel: string;
+  quote?: File | null;
 };
 
 type LeadModalProps = {
@@ -28,7 +29,7 @@ const priorities: Lead["priority"][] = ["High", "Medium", "Low"];
 
 export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onClose, onSave }: LeadModalProps) {
   const id = useId();
-  const baseForm = lead
+  const initialForm = lead
     ? {
         name: lead.name,
         company: lead.company,
@@ -39,6 +40,7 @@ export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onCl
         nextAction: lead.nextAction,
         notes: lead.notes,
         channel: lead.channel,
+        quote: null,
       }
     : {
         name: "",
@@ -50,9 +52,11 @@ export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onCl
         nextAction: "",
         notes: "",
         channel: "",
+        quote: null,
       };
-  const [form, setForm] = useState<LeadFormValues>(() => baseForm);
+  const [form, setForm] = useState<LeadFormValues>(() => initialForm);
   const [saving, setSaving] = useState(false);
+  const [quoteFile, setQuoteFile] = useState<File | null>(null);
 
   const handleChange = (field: keyof LeadFormValues, value: string | number) => {
     setForm((prev) => ({
@@ -63,7 +67,7 @@ export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onCl
 
   const handleSubmit = async () => {
     setSaving(true);
-    await onSave(form, lead);
+    await onSave({ ...form, quote: quoteFile }, lead);
     setSaving(false);
     onClose();
   };
@@ -154,6 +158,25 @@ export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onCl
             value={form.notes}
             onChange={(event) => handleChange("notes", event.target.value)}
           />
+          <label className="col-span-2 text-sm text-slate-400">
+            <span className="text-xs uppercase tracking-[0.4em] text-slate-500">Quotation (PDF)</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white"
+              onChange={(event) => setQuoteFile(event.target.files?.[0] ?? null)}
+            />
+            {lead?.quoteUrl && (
+              <a
+                href={lead.quoteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex items-center text-xs text-cyan-300 underline"
+              >
+                View existing quotation
+              </a>
+            )}
+          </label>
         </div>
         <div className="mt-5 flex items-center justify-end gap-3 text-sm">
           <button

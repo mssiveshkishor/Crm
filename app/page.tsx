@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
+import clsx from "clsx";
 import { Lead, leadStages, LeadStage, sampleLeads, LeadOwner } from "@/lib/data/leads";
 import { SystemUser, sampleUsers } from "@/lib/data/users";
 import { fetchLeads } from "@/lib/api/leads";
 import { fetchUsers } from "@/lib/api/users";
 import { fetchStageLabels, saveStageLabel } from "@/lib/api/stageLabels";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useSupabaseAuth } from "@/lib/hooks/useSupabaseAuth";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LeadList } from "@/components/LeadList";
@@ -17,6 +17,7 @@ import { LoginPanel } from "@/components/LoginPanel";
 import { LeadModal, LeadFormValues } from "@/components/LeadModal";
 import { Sidebar } from "@/components/Sidebar";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,20 @@ const defaultStageLabels: Record<LeadStage, string> = leadStages.reduce(
   }),
   {} as Record<LeadStage, string>
 );
+
+const roleColorMap: Record<SystemUser["role"], string> = {
+  superadmin: "#f97316",
+  admin: "#14b8a6",
+  manager: "#22d3ee",
+  sales: "#3b82f6",
+};
+
+const getRoleColor = (role?: SystemUser["role"]) => {
+  if (role && roleColorMap[role]) {
+    return roleColorMap[role];
+  }
+  return "#9ca3af";
+};
 
 export default function HomePage() {
   const { session, loading, error, signInWithPassword, signOut } = useSupabaseAuth();
@@ -100,22 +115,41 @@ export default function HomePage() {
 
   const handleLeadSave = async (values: LeadFormValues, lead?: Lead) => {
     const supabase = getSupabaseClient();
+    if (!supabase) return;
+
     const payload = {
       name: values.name,
       company: values.company,
       value: values.value,
       stage: values.stage,
+      owner_id: values.ownerId,
       priority: values.priority,
       last_contacted: new Date().toISOString(),
       next_action: values.nextAction,
       notes: values.notes,
       channel: values.channel,
     };
-    if (lead && supabase) {
-      await supabase.from("leads").update(payload).eq("id", lead.id);
-    } else if (supabase) {
-      await supabase.from("leads").insert(payload);
+
+    let leadId = lead?.id;
+    if (leadId) {
+      await supabase.from("leads").update(payload).eq("id", leadId);
+    } else {
+      const { data } = await supabase.from("leads").insert(payload).select("id").single();
+      leadId = data?.id;
     }
+
+    if (values.quote && leadId) {
+      const filePath = `quotations/quote-${leadId}.pdf`;
+      await supabase.storage.from("quotations").upload(filePath, values.quote, {
+        upsert: true,
+        contentType: "application/pdf",
+      });
+      const { data: urlData } = supabase.storage.from("quotations").getPublicUrl(filePath);
+      if (urlData?.publicUrl) {
+        await supabase.from("leads").update({ quote_url: urlData.publicUrl }).eq("id", leadId);
+      }
+    }
+
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
   };
 
@@ -134,11 +168,23 @@ export default function HomePage() {
         .map((part) => part[0] ?? "")
         .join("")
         .toUpperCase(),
-      color: user.role === "superadmin" ? "#f97316" : user.role === "admin" ? "#14b8a6" : "#3b82f6",
+      color: getRoleColor(user.role),
+      role: user.role,
+      team: user.team,
     }));
-    return formatted.length > 0 ? formatted : [
-      { id: "owner_1", name: "Priya Desai", email: "priya@yadhurtech.com", initials: "PD", color: "#f97316" },
-    ];
+    return formatted.length > 0
+      ? formatted
+      : [
+          {
+            id: "owner_1",
+            name: "Priya Desai",
+            email: "priya@yadhurtech.com",
+            initials: "PD",
+            color: "#f97316",
+            role: "superadmin",
+            team: "Leadership",
+          },
+        ];
   }, [users]);
 
   const openModalForLead = (lead?: Lead) => {
@@ -182,6 +228,49 @@ export default function HomePage() {
         canViewSettings={canManageSettings}
       />
       <div className="flex flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
+        <div className="space-y-3 lg:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-950/80 px-4 py-3 shadow-xl">
+            <div className="flex items-center gap-3">
+              <img src="/logo.jpeg" alt="Yadhurtech logo" className="h-10 w-10 rounded-2xl object-cover" />
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Yadhurtech CRM</p>
+                <p className="text-sm font-semibold text-white">Superadmin cockpit</p>
+              </div>
+            </div>
+            <button
+              className="rounded-2xl bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950"
+              onClick={() => openModalForLead()}
+            >
+              Add lead
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className={clsx(
+                "flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold",
+                activeView === "dashboard"
+                  ? "border-cyan-500 text-white"
+                  : "border-white/20 text-slate-300 hover:border-white/40"
+              )}
+              onClick={() => setView("dashboard")}
+            >
+              Dashboard
+            </button>
+            {canManageSettings && (
+              <button
+                className={clsx(
+                  "flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold",
+                  activeView === "settings"
+                    ? "border-cyan-500 text-white"
+                    : "border-white/20 text-slate-300 hover:border-white/40"
+                )}
+                onClick={() => setView("settings")}
+              >
+                Settings
+              </button>
+            )}
+          </div>
+        </div>
         {activeView === "dashboard" ? (
           <>
             <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30">

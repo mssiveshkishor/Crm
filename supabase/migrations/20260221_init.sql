@@ -24,6 +24,7 @@ create table leads (
   next_action text,
   notes text,
   channel text,
+  quote_url text,
   created_at timestamptz default now()
 );
 

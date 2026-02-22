@@ -4,6 +4,7 @@ import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "
 import { Lead, leadStages } from "@/lib/data/leads";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import clsx from "clsx";
+import { formatINR } from "@/lib/utils/formatCurrency";
 
 type KanbanBoardProps = {
   leads: Lead[];
@@ -49,10 +50,17 @@ const LeadCard = ({ lead }: { lead: Lead }) => {
       </div>
       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-2">{lead.company}</p>
       <p className="text-sm text-slate-600 dark:text-slate-200 mt-2">{lead.notes}</p>
-      <div className="mt-3 flex items-center justify-between text-[13px] text-slate-500 dark:text-slate-400">
-        <span>{lead.nextAction}</span>
-        <span className="font-semibold text-slate-900 dark:text-white">${lead.value.toLocaleString()}</span>
-      </div>
+        <div className="mt-3 space-y-2 text-[13px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between">
+            <span>{lead.nextAction}</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{formatINR(lead.value)}</span>
+          </div>
+          {lead.quoteUrl && (
+            <a href={lead.quoteUrl} target="_blank" rel="noreferrer" className="text-xs text-cyan-400 underline">
+              View quotation
+            </a>
+          )}
+        </div>
     </div>
   );
 };
