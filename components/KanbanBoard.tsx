@@ -100,7 +100,7 @@ const Column = ({
   );
 };
 
-export function KanbanBoard({ leads, onLeadStageChange }: KanbanBoardProps) {
+export function KanbanBoard({ leads, onLeadStageChange, stageLabels, onCardClick }: KanbanBoardProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
