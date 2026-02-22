@@ -46,7 +46,7 @@ export default function HomePage() {
     queryFn: fetchStageLabels,
     refetchOnWindowFocus: false,
   });
-  const [labelOverrides, setLabelOverrides] = useState<Record<LeadStage, string>>({});
+  const [labelOverrides, setLabelOverrides] = useState<Record<LeadStage, string>>(() => ({} as Record<LeadStage, string>));
   const [view, setView] = useState<"dashboard" | "settings">("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLead, setModalLead] = useState<Lead | null>(null);
