@@ -17,13 +17,13 @@ export async function fetchStageLabels(): Promise<Record<LeadStage, string>> {
     return fallback;
   }
 
-  const { data, error } = await supabase.from("stage_labels").select<StageLabelRow>("stage, label");
+  const { data, error } = await supabase.from("stage_labels").select("stage, label");
   if (error) {
     console.error("fetchStageLabels", error);
     return fallback;
   }
 
-  return data?.reduce((acc, row) => {
+  return (data as StageLabelRow[])?.reduce((acc, row) => {
     if (leadStages.includes(row.stage as LeadStage)) {
       acc[row.stage as LeadStage] = row.label;
     }
