@@ -8,6 +8,8 @@ import clsx from "clsx";
 type KanbanBoardProps = {
   leads: Lead[];
   onLeadStageChange: (leadId: string, stage: Lead["stage"]) => void;
+  stageLabels: Record<Lead["stage"], string>;
+  onCardClick: (lead: Lead) => void;
 };
 
 const LeadCard = ({ lead }: { lead: Lead }) => {
@@ -55,13 +57,23 @@ const LeadCard = ({ lead }: { lead: Lead }) => {
   );
 };
 
-const ColumnHeader = ({ stage }: { stage: string }) => (
+const ColumnHeader = ({ label }: { label: string }) => (
   <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-    <span>{stage}</span>
+    <span>{label}</span>
   </div>
 );
 
-const Column = ({ stage, leads }: { stage: Lead["stage"]; leads: Lead[] }) => {
+const Column = ({
+  stage,
+  leads,
+  onCardClick,
+  label,
+}: {
+  stage: Lead["stage"];
+  leads: Lead[];
+  label: string;
+  onCardClick: (lead: Lead) => void;
+}) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${stage}`,
     data: { stage },
@@ -76,10 +88,12 @@ const Column = ({ stage, leads }: { stage: Lead["stage"]; leads: Lead[] }) => {
         isOver && "ring-2 ring-cyan-400/40"
       )}
     >
-      <ColumnHeader stage={stage} />
+      <ColumnHeader label={label} />
       <div className="mt-4 flex flex-col gap-4">
         {leads.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} />
+          <button key={lead.id} type="button" onClick={() => onCardClick(lead)} className="text-left">
+            <LeadCard lead={lead} />
+          </button>
         ))}
       </div>
     </div>
@@ -107,7 +121,13 @@ export function KanbanBoard({ leads, onLeadStageChange }: KanbanBoardProps) {
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="flex gap-6 overflow-x-auto pb-4">
         {leadStages.map((stage) => (
-          <Column key={stage} stage={stage} leads={leads.filter((lead) => lead.stage === stage)} />
+          <Column
+            key={stage}
+            stage={stage}
+            label={stageLabels[stage]}
+            leads={leads.filter((lead) => lead.stage === stage)}
+            onCardClick={onCardClick}
+          />
         ))}
       </div>
     </DndContext>

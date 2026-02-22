@@ -15,7 +15,7 @@ export const leadStages: LeadStage[] = [
   "Lost",
 ];
 
-type LeadOwner = {
+export type LeadOwner = {
   id: string;
   name: string;
   email: string;
