@@ -11,7 +11,7 @@ type SidebarProps = {
   canViewSettings: boolean;
 };
 
-export function Sidebar({ activeView, onChangeView, session, onSignOut }: SidebarProps) {
+export function Sidebar({ activeView, onChangeView, session, onSignOut, canViewSettings }: SidebarProps) {
   const base = [{ id: "dashboard", label: "Dashboard" }] as const;
   const nav = canViewSettings ? [...base, { id: "settings", label: "Settings" }] : base;
 
