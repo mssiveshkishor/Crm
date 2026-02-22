@@ -8,11 +8,13 @@ type SettingsPanelProps = {
   stageLabels: Record<LeadStage, string>;
   onStageLabelChange: (stage: LeadStage, label: string) => void;
   users: SystemUser[];
-  onAddUser: (user: SystemUser) => void;
+  onInviteUser: (payload: { email: string; password: string; role: SystemUser["role"]; team: string }) => Promise<void>;
 };
 
-export function SettingsPanel({ stageLabels, onStageLabelChange, users, onAddUser }: SettingsPanelProps) {
-  const [newUser, setNewUser] = useState({ name: "", email: "", role: "sales", team: "" });
+export function SettingsPanel({ stageLabels, onStageLabelChange, users, onInviteUser }: SettingsPanelProps) {
+  const [newUser, setNewUser] = useState({ email: "", password: "", role: "sales", team: "" });
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   return (
     <div className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -38,15 +40,16 @@ export function SettingsPanel({ stageLabels, onStageLabelChange, users, onAddUse
           <div className="grid gap-2 md:grid-cols-3">
             <input
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
-              placeholder="Name"
-              value={newUser.name}
-              onChange={(event) => setNewUser((prev) => ({ ...prev, name: event.target.value }))}
-            />
-            <input
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
               placeholder="Email"
               value={newUser.email}
               onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
+            />
+            <input
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+              placeholder="Password"
+              type="password"
+              value={newUser.password}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))}
             />
             <select
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
@@ -66,21 +69,28 @@ export function SettingsPanel({ stageLabels, onStageLabelChange, users, onAddUse
           />
           <button
             className="rounded-2xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
-            onClick={() => {
-              if (!newUser.name || !newUser.email) return;
-              onAddUser({
-                id: crypto.randomUUID(),
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role as SystemUser["role"],
-                team: newUser.team || "Growth",
-                lastActive: "Just now",
-              });
-              setNewUser({ name: "", email: "", role: "sales", team: "" });
+            onClick={async () => {
+              if (!newUser.email || !newUser.password) return;
+              setInviting(true);
+              setInviteError(null);
+              try {
+                await onInviteUser({
+                  email: newUser.email,
+                  password: newUser.password,
+                  role: newUser.role as SystemUser["role"],
+                  team: newUser.team || "Growth",
+                });
+                setNewUser({ email: "", password: "", role: "sales", team: "" });
+              } catch (err) {
+                setInviteError((err as Error)?.message ?? "Failed to invite user");
+              } finally {
+                setInviting(false);
+              }
             }}
           >
-            Add user
+            {inviting ? "Inviting…" : "Invite user"}
           </button>
+          {inviteError && <p className="text-xs text-rose-400">{inviteError}</p>}
         </div>
         <div className="mt-4 space-y-2 text-sm">
           {users.map((user) => (

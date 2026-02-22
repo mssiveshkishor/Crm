@@ -8,13 +8,12 @@ type SidebarProps = {
   onChangeView: (view: "dashboard" | "settings") => void;
   session: Session;
   onSignOut: () => void;
+  canViewSettings: boolean;
 };
 
 export function Sidebar({ activeView, onChangeView, session, onSignOut }: SidebarProps) {
-  const nav = [
-    { id: "dashboard", label: "Dashboard" },
-    { id: "settings", label: "Settings" },
-  ] as const;
+  const base = [{ id: "dashboard", label: "Dashboard" }] as const;
+  const nav = canViewSettings ? [...base, { id: "settings", label: "Settings" }] : base;
 
   return (
     <aside className="hidden w-56 flex-col gap-6 border-r border-white/5 bg-slate-950 p-6 text-sm text-slate-300 lg:flex">

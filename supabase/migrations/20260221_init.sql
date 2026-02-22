@@ -44,3 +44,19 @@ create policy "Superadmin full access" on leads
 create policy "Owners can read own leads" on leads
   for select
   using (owner_id = auth.uid());
+
+create table stage_labels (
+  stage text primary key,
+  label text not null,
+  updated_at timestamptz default now()
+);
+
+insert into stage_labels (stage, label)
+values
+  ('New', 'New'),
+  ('Contacted', 'Contacted'),
+  ('Qualified', 'Qualified'),
+  ('Negotiation', 'Negotiation'),
+  ('Won', 'Won'),
+  ('Lost', 'Lost')
+on conflict (stage) do update set label = excluded.label, updated_at = now();

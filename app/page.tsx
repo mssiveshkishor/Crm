@@ -1,9 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
+import { Lead, leadStages, LeadStage, sampleLeads, LeadOwner } from "@/lib/data/leads";
+import { SystemUser, sampleUsers } from "@/lib/data/users";
 import { fetchLeads } from "@/lib/api/leads";
 import { fetchUsers } from "@/lib/api/users";
+import { fetchStageLabels, saveStageLabel } from "@/lib/api/stageLabels";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useSupabaseAuth } from "@/lib/hooks/useSupabaseAuth";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { LeadList } from "@/components/LeadList";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -11,11 +17,6 @@ import { LoginPanel } from "@/components/LoginPanel";
 import { LeadModal, LeadFormValues } from "@/components/LeadModal";
 import { Sidebar } from "@/components/Sidebar";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
-import { Lead, leadStages, LeadStage, sampleLeads, sampleOwners, LeadOwner } from "@/lib/data/leads";
-import { SystemUser, sampleUsers } from "@/lib/data/users";
-import { useSupabaseAuth } from "@/lib/hooks/useSupabaseAuth";
-import { getSupabaseClient } from "@/lib/supabaseClient";
-import { ChevronDown } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ const defaultStageLabels: Record<LeadStage, string> = leadStages.reduce(
 export default function HomePage() {
   const { session, loading, error, signInWithPassword, signOut } = useSupabaseAuth();
   const queryClient = useQueryClient();
-  const { data, isFetching } = useQuery({
+  const { data: leadsData, isFetching } = useQuery({
     queryKey: ["leads"],
     queryFn: fetchLeads,
     refetchOnWindowFocus: false,
@@ -40,31 +41,53 @@ export default function HomePage() {
     queryFn: fetchUsers,
     refetchOnWindowFocus: false,
   });
-  const [stageLabels, setStageLabels] = useState<Record<LeadStage, string>>(defaultStageLabels);
+  const { data: fetchedStageLabels } = useQuery({
+    queryKey: ["stage-labels"],
+    queryFn: fetchStageLabels,
+    refetchOnWindowFocus: false,
+  });
+  const [labelOverrides, setLabelOverrides] = useState<Record<LeadStage, string>>({});
   const [view, setView] = useState<"dashboard" | "settings">("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLead, setModalLead] = useState<Lead | null>(null);
-  const [localUsers, setLocalUsers] = useState<SystemUser[]>([]);
-  const [ownerLibrary] = useState<LeadOwner[]>(sampleOwners);
   const isMobile = useMediaQuery("(max-width: 900px)");
 
-  const leads = useMemo(() => data ?? sampleLeads, [data]);
-  const users = useMemo(() => [...localUsers, ...(fetchedUsers ?? sampleUsers)], [localUsers, fetchedUsers]);
+  const leads = useMemo(() => leadsData ?? sampleLeads, [leadsData]);
+  const users = useMemo(() => fetchedUsers ?? sampleUsers, [fetchedUsers]);
+  const currentUser = useMemo(() => users.find((user) => user.id === session?.user?.id), [users, session]);
+  const canManageSettings = currentUser?.role === "superadmin" || currentUser?.role === "admin";
 
-  if (!session) {
-    return (
-      <LoginPanel
-        loading={loading}
-        error={error}
-        onSubmit={async (email, password) => {
-          await signInWithPassword(email, password);
-        }}
-      />
-    );
-  }
+  const stageLabelMutation = useMutation({
+    mutationFn: ({ stage, label }: { stage: LeadStage; label: string }) => saveStageLabel(stage, label),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["stage-labels"] });
+    },
+    onSuccess: (_data, variables) => {
+      setLabelOverrides((prev) => {
+        const next = { ...prev };
+        delete next[variables.stage];
+        return next;
+      });
+    },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async (payload: { email: string; password: string; role: SystemUser["role"]; team: string }) => {
+      const response = await fetch("/api/users/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error ?? "Invitation failed");
+      }
+    },
+  });
 
   const handleStageLabelChange = (stage: LeadStage, label: string) => {
-    setStageLabels((prev) => ({ ...prev, [stage]: label }));
+    setLabelOverrides((prev) => ({ ...prev, [stage]: label }));
+    stageLabelMutation.mutate({ stage, label });
   };
 
   const handleLeadStageChange = async (leadId: string, stage: Lead["stage"]) => {
@@ -96,20 +119,70 @@ export default function HomePage() {
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
   };
 
-  const handleAddUser = (user: SystemUser) => {
-    setLocalUsers((prev) => [user, ...prev]);
+  const handleAddUser = async (payload: { email: string; password: string; role: SystemUser["role"]; team: string }) => {
+    await inviteMutation.mutateAsync(payload);
+    await queryClient.invalidateQueries({ queryKey: ["users"] });
   };
+
+  const ownerLibrary = useMemo<LeadOwner[]>(() => {
+    const formatted = users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      initials: user.name
+        .split(" ")
+        .map((part) => part[0] ?? "")
+        .join("")
+        .toUpperCase(),
+      color: user.role === "superadmin" ? "#f97316" : user.role === "admin" ? "#14b8a6" : "#3b82f6",
+    }));
+    return formatted.length > 0 ? formatted : [
+      { id: "owner_1", name: "Priya Desai", email: "priya@yadhurtech.com", initials: "PD", color: "#f97316" },
+    ];
+  }, [users]);
 
   const openModalForLead = (lead?: Lead) => {
     setModalLead(lead ?? null);
     setModalOpen(true);
   };
 
+  const stageLabels = useMemo(
+    () => ({
+      ...defaultStageLabels,
+      ...(fetchedStageLabels ?? {}),
+      ...labelOverrides,
+    }),
+    [fetchedStageLabels, labelOverrides]
+  );
+
+  if (!session) {
+    return (
+      <LoginPanel
+        loading={loading}
+        error={error}
+        onSubmit={async (email, password) => {
+          await signInWithPassword(email, password);
+        }}
+      />
+    );
+  }
+
+  const activeView = canManageSettings ? view : "dashboard";
+
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar session={session} activeView={view} onChangeView={setView} onSignOut={signOut} />
+      <Sidebar
+        session={session}
+        activeView={activeView}
+        onChangeView={(next) => {
+          if (next === "settings" && !canManageSettings) return;
+          setView(next);
+        }}
+        onSignOut={signOut}
+        canViewSettings={canManageSettings}
+      />
       <div className="flex flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
-        {view === "dashboard" ? (
+        {activeView === "dashboard" ? (
           <>
             <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -125,8 +198,8 @@ export default function HomePage() {
                 </button>
               </div>
               <p className="text-sm text-slate-400">
-                Drag leads between stages, rename stages, and keep track of every conversation. Click a card to update it
-                instantly.
+                Drag leads between stages, rename stages, and keep track of every conversation. Click a card to update
+                it instantly.
               </p>
             </header>
             <section className="space-y-4">
@@ -157,7 +230,7 @@ export default function HomePage() {
             stageLabels={stageLabels}
             onStageLabelChange={handleStageLabelChange}
             users={users}
-            onAddUser={handleAddUser}
+            onInviteUser={handleAddUser}
           />
         )}
       </div>

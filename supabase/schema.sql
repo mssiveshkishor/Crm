@@ -34,6 +34,20 @@ create table activities (
   inserted_at timestamptz default now()
 );
 
+create table stage_labels (
+  stage text primary key,
+  label text not null,
+  updated_at timestamptz default now()
+);
+
+insert into stage_labels (stage, label) values
+  ('New', 'New'),
+  ('Contacted', 'Contacted'),
+  ('Qualified', 'Qualified'),
+  ('Negotiation', 'Negotiation'),
+  ('Won', 'Won'),
+  ('Lost', 'Lost');
+
 -- Example policy: only superadmins can do everything, others limited to owner row
 create policy "Superadmin full access" on leads
   for all
