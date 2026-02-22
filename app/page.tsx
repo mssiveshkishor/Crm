@@ -139,14 +139,24 @@ export default function HomePage() {
     }
 
     if (values.quote && leadId) {
-      const filePath = `quotations/quote-${leadId}.pdf`;
-      await supabase.storage.from("quotations").upload(filePath, values.quote, {
-        upsert: true,
-        contentType: "application/pdf",
+      const formData = new FormData();
+      formData.append("leadId", leadId);
+      formData.append("file", values.quote);
+
+      const uploadResponse = await fetch("/api/quotations/upload", {
+        method: "POST",
+        body: formData,
       });
-      const { data: urlData } = supabase.storage.from("quotations").getPublicUrl(filePath);
-      if (urlData?.publicUrl) {
-        await supabase.from("leads").update({ quote_url: urlData.publicUrl }).eq("id", leadId);
+
+      const uploadBody = await uploadResponse.json().catch(() => ({}));
+      if (!uploadResponse.ok) {
+        console.error("Quotation upload failed", uploadBody);
+        throw new Error(uploadBody.error ?? "Quotation upload failed");
+      }
+
+      const quoteUrl = uploadBody.quoteUrl as string | undefined;
+      if (quoteUrl) {
+        await supabase.from("leads").update({ quote_url: quoteUrl }).eq("id", leadId);
       }
     }
 

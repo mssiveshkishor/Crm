@@ -166,17 +166,28 @@ export function LeadModal({ open, lead, stageLabels, owners = sampleOwners, onCl
               className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white"
               onChange={(event) => setQuoteFile(event.target.files?.[0] ?? null)}
             />
-            {lead?.quoteUrl && (
-              <a
-                href={lead.quoteUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-flex items-center text-xs text-cyan-300 underline"
-              >
-                View existing quotation
-              </a>
-            )}
           </label>
+          {lead?.quoteUrl && (
+            <div className="col-span-2 space-y-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Stored quotation</p>
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/60">
+                <object
+                  data={lead.quoteUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="220"
+                  className="h-56 w-full"
+                >
+                  <p className="p-3 text-xs text-slate-400">
+                    This browser cannot display PDFs.{" "}
+                    <a href={lead.quoteUrl} target="_blank" rel="noreferrer" className="text-cyan-400 underline">
+                      Open in a new tab.
+                    </a>
+                  </p>
+                </object>
+              </div>
+            </div>
+          )}
         </div>
         <div className="mt-5 flex items-center justify-end gap-3 text-sm">
           <button
