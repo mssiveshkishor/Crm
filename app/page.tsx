@@ -243,7 +243,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <img src="/logo.jpeg" alt="Yadhurtech logo" className="h-10 w-10 rounded-2xl object-cover" />
               <div>
-                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Yadhurtech CRM</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Yadhurtech</p>
                 <p className="text-sm font-semibold text-white">Superadmin cockpit</p>
               </div>
             </div>

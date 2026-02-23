@@ -14,9 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yadhurtech CRM",
+  title: "Yadhurtech",
   description:
-    "A modern Kanban + list CRM built with Next.js, Supabase, and superadmin controls.",
+    "Yadhurtech CRM: A modern Kanban + list workspace built with Next.js and Supabase.",
+  icons: [
+    { rel: "icon", url: "/favicon.png", sizes: "32x32" },
+    { rel: "icon", url: "/logo.jpeg", sizes: "192x192" },
+    { rel: "apple-touch-icon", url: "/favicon.png" },
+  ],
 };
 
 export default function RootLayout({

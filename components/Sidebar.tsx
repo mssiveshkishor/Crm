@@ -29,7 +29,7 @@ export function Sidebar({ activeView, onChangeView, session, onSignOut, canViewS
             className="h-10 w-10 rounded-2xl object-cover"
           />
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech</p>
             <p className="text-lg font-semibold text-white">{session.user.email}</p>
           </div>
         </div>

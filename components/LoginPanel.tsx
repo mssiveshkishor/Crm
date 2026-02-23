@@ -26,7 +26,7 @@ export function LoginPanel({ onSubmit, loading, error }: LoginPanelProps) {
             alt="Yadhurtech logo"
             className="h-10 w-10 rounded-2xl object-cover"
           />
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech CRM</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Yadhurtech</p>
         </div>
         <h1 className="mt-3 text-3xl font-semibold">Welcome back</h1>
         <p className="text-sm text-slate-400">Sign in with your super admin credentials to continue.</p>
