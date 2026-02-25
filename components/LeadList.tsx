@@ -1,7 +1,7 @@
 "use client";
 
 import { Lead } from "@/lib/data/leads";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Phone, MessageCircle } from "lucide-react";
 import clsx from "clsx";
 import { formatINR } from "@/lib/utils/formatCurrency";
 
@@ -43,6 +43,28 @@ export function LeadList({ leads, stageLabels, onCardClick }: LeadListProps) {
                 >
                   {lead.quoteUrl ? "Quotation" : "Add quote"}
                 </a>
+                <div className="flex items-center gap-2">
+                  {lead.phone && (
+                    <>
+                      <a
+                        href={`tel:${lead.phone}`}
+                        className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone size={14} />
+                      </a>
+                      <a
+                        href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MessageCircle size={14} />
+                      </a>
+                    </>
+                  )}
+                </div>
                 <MoreHorizontal size={16} />
               </div>
             </div>

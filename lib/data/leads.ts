@@ -1,12 +1,6 @@
 import type { UserRole } from "./users";
 
-export type LeadStage =
-  | "New"
-  | "Contacted"
-  | "Qualified"
-  | "Negotiation"
-  | "Won"
-  | "Lost";
+export type LeadStage = string;
 
 export const leadStages: LeadStage[] = [
   "New",
@@ -40,6 +34,8 @@ export type Lead = {
   notes: string;
   channel: string;
   quoteUrl?: string;
+  is_archived?: boolean;
+  phone?: string;
 };
 
 export const sampleOwners: LeadOwner[] = [

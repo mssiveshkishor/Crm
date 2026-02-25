@@ -36,6 +36,8 @@ export async function fetchLeads(): Promise<Lead[]> {
       notes,
       channel,
       quote_url,
+      is_archived,
+      phone,
       owner:profiles(id, full_name, email, role, team)
     `)
     .order("created_at", { ascending: false });
@@ -61,16 +63,18 @@ export async function fetchLeads(): Promise<Lead[]> {
         notes: row.notes ?? "",
         channel: row.channel ?? "Email",
         quoteUrl: row.quote_url ?? undefined,
+        is_archived: row.is_archived ?? false,
+        phone: row.phone ?? "",
         owner: {
           id: ownerRow?.id ?? "owner_fallback",
           name: ownerRow?.full_name ?? "Unassigned",
           email: ownerRow?.email ?? "",
           initials: ownerRow?.full_name
             ? ownerRow.full_name
-                .split(" ")
-                .map((part: string) => part[0])
-                .join("")
-                .toUpperCase()
+              .split(" ")
+              .map((part: string) => part[0])
+              .join("")
+              .toUpperCase()
             : "UA",
           color: getRoleColor(ownerRow?.role as SystemUser["role"] | undefined),
           role: ownerRow?.role,

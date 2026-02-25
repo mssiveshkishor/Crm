@@ -6,7 +6,7 @@ create table profiles (
   id uuid primary key,
   email text unique not null,
   full_name text not null,
-  role text check (role in ('superadmin', 'manager', 'sales')) not null default 'sales',
+  role text check (role in ('superadmin', 'admin', 'manager', 'sales')) not null default 'sales',
   team text,
   created_at timestamptz default now()
 );
@@ -58,3 +58,15 @@ create policy "Superadmin full access" on leads
 create policy "Owners can read own leads" on leads
   for select
   using (owner_id = auth.uid());
+
+-- RLS for stage_labels
+alter table stage_labels enable row level security;
+
+create policy "Allow public read for stage_labels" on stage_labels
+  for select
+  using (true);
+
+create policy "Only superadmins can manage stage_labels" on stage_labels
+  for all
+  using (auth.jwt()->>'role' = 'superadmin')
+  with check (auth.jwt()->>'role' = 'superadmin');
